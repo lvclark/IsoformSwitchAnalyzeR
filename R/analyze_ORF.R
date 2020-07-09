@@ -1253,7 +1253,11 @@ extractSequence <- function(
                     end = indexVec[-1]
                 )
                 n <- nrow(indexDf)
-                indexDf$file <- paste0('_subset_', seq_len(n),'_of_',n)
+                if(n == 0){
+                    indexDf$file <- character(0)
+                } else {
+                    indexDf$file <- paste0('_subset_', seq_len(n),'_of_',n)
+                }
 
                 ### loop over index and make files
                 tmp <- plyr::ddply(indexDf, .variables = 'file', .fun = function(aDF) { # aDF <- indexDf[1,]
