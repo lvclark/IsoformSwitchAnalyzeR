@@ -451,7 +451,7 @@ switchPlotTranscript <- function(
                     DomainAnalysis$isoform_id <-
                         factor(DomainAnalysis$isoform_id,
                                levels = unique(isoInfo$isoform_id))
-                    DomainAnalysis$id <- 1:nrow(DomainAnalysis)
+                    DomainAnalysis$id <- seq_len(nrow(DomainAnalysis))
 
 
                     annotationList$protein_domain <- DomainAnalysis[,c('isoform_id','pfamStartGenomic','pfamEndGenomic','hmm_name','id')]
@@ -474,7 +474,7 @@ switchPlotTranscript <- function(
                                levels = unique(isoInfo$isoform_id))
 
                     #idrAnalysis$idrName <- 'IDR'
-                    idrAnalysis$id <- 1:nrow(idrAnalysis)
+                    idrAnalysis$id <- seq_len(nrow(idrAnalysis))
 
 
                     annotationList$idr <- idrAnalysis[,c('isoform_id','idrStartGenomic','idrEndGenomic','id')]
@@ -541,7 +541,7 @@ switchPlotTranscript <- function(
                             if (length(duplicatedIndex)) {
                                 aVec[duplicatedIndex] <-
                                     paste(aVec[duplicatedIndex],
-                                          1:length(duplicatedIndex),
+                                          seq_along(duplicatedIndex),
                                           sep = '.')
                             }
                             return(aVec)
@@ -613,7 +613,7 @@ switchPlotTranscript <- function(
                                 if (length(duplicatedIndex)) {
                                     aVec[duplicatedIndex] <-
                                         paste(aVec[duplicatedIndex],
-                                              1:length(duplicatedIndex),
+                                              seq_along(duplicatedIndex),
                                               sep = '.')
                                 }
                                 return(aVec)
@@ -772,7 +772,7 @@ switchPlotTranscript <- function(
         }
         # domain - loop over each domain
         if (length(localDomainStart)) {
-            for (j in 1:length(localDomainStart)) {
+            for (j in seq_along(localDomainStart)) {
                 coordinatPair <- c(localDomainStart[j], localDomainEnd[j])
                 if( all( !is.na(coordinatPair)) ) {
                     domainRange <-
@@ -787,7 +787,7 @@ switchPlotTranscript <- function(
         }
         # IDR
         if (length(localIdrStart)) {
-            for (j in 1:length(localIdrStart)) {
+            for (j in seq_along(localIdrStart)) {
                 coordinatPair <- c(localIdrStart[j], localIdrEnd[j])
                 if( all( !is.na(coordinatPair)) ) {
                     domainRange <-
@@ -815,7 +815,7 @@ switchPlotTranscript <- function(
         }
         # trimmed
         if (length(localtrimmedStart)) {
-            for (j in 1:length(localtrimmedStart)) {
+            for (j in seq_along(localtrimmedStart)) {
                 coordinatPair <- c(localtrimmedStart[j], localtrimmedEnd[j])
                 if( all( !is.na(coordinatPair)) ) {
                     domainRange <-
@@ -1262,7 +1262,7 @@ switchPlotTranscript <- function(
                     hues <- seq(15, 375, length = n + 1)
                     hcl(h = hues,
                         l = 65,
-                        c = 100)[1:n]
+                        c = 100)[seq_len(n)]
                 }
                 domainsColor <- gg_color_hue(length(domainsFound))
             } else {
@@ -1286,7 +1286,7 @@ switchPlotTranscript <- function(
 
             moveToIndex <- which(sort(apperanceInData) == "Not Analyzed")
             correspondingColors <- c(
-                correspondingColors[1:(moveToIndex-1)],
+                correspondingColors[seq_len(moveToIndex-1)],
                 correspondingColors[length(correspondingColors)],
                 correspondingColors[(moveToIndex):(length(correspondingColors)-1)]
             )
@@ -3223,7 +3223,7 @@ switchPlot <- function(
     # print header
     print(myTitle, vp = viewport(
         layout.pos.row = 1,
-        layout.pos.col = 1:(nColToUse - legendSize)
+        layout.pos.col = seq_len(nColToUse - legendSize)
     ))
 
     # transctipt plot
@@ -3231,7 +3231,7 @@ switchPlot <- function(
         transcriptPlot2 + guides(fill = FALSE),
         vp = viewport(
             layout.pos.row = 2:8,
-            layout.pos.col = 1:expPlotLast
+            layout.pos.col = seq_len(expPlotLast)
         )
     ))
 

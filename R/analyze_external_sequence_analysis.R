@@ -516,7 +516,7 @@ analyzePFAM <- function(
                                             file = fileVector,
                                             col_names = paste0(
                                                 'X',
-                                                1:(15+ activeResidueIncluded)
+                                                seq_len(15+ activeResidueIncluded)
                                             ),
                                             skip = skipLine,
                                             comment = '#',
@@ -609,7 +609,7 @@ analyzePFAM <- function(
 
             ### Old style
             if ( oldStyle & !newStyle ) {
-                colnames(myPfamResult) <- oldColnames[1:ncol(myPfamResult)]
+                colnames(myPfamResult) <- oldColnames[seq_len(ncol(myPfamResult))]
 
                 if( 'residue' %in% colnames(myPfamResult) ) {
                     myPfamResult$residue[which(myPfamResult$residue == '')] <-
@@ -619,7 +619,7 @@ analyzePFAM <- function(
 
             ### New style
             if ( ! oldStyle & newStyle ) {
-                colnames(myPfamResult) <- newColNames[1:ncol(myPfamResult)]
+                colnames(myPfamResult) <- newColNames[seq_len(ncol(myPfamResult))]
                 myPfamResult$clan[which(myPfamResult$clan == '')] <- NA
 
             }
@@ -673,7 +673,7 @@ analyzePFAM <- function(
                 ! is.na(myPfamResult$hmm_acc)
             )
         } else {
-            nonNaIndex <- 1:nrow(myPfamResult)
+            nonNaIndex <- seq_len(nrow(myPfamResult))
         }
         test2 <-
             all(grepl(
@@ -822,7 +822,7 @@ analyzePFAM <- function(
 
                     # loop over domain alignment (migh be several)
                     orfPosList <- list()
-                    for (j in 1:nrow(localORFalignment)) {
+                    for (j in seq_len(nrow(localORFalignment))) {
                         domainInfo <-
                             convertCoordinatsTranscriptToGenomic(
                                 transcriptCoordinats =  localORFalignment[j, ],
@@ -848,7 +848,7 @@ analyzePFAM <- function(
                                     activeResInfo$activeRes  * 3
 
                                 activeResInfoList <- list()
-                                for (k in 1:nrow(activeResInfo)) {
+                                for (k in seq_len(nrow(activeResInfo))) {
                                     activeResInfoList[[as.character(k)]] <-
                                         convertCoordinatsTranscriptToGenomic(
                                             transcriptCoordinats = activeResInfo[k, ],
@@ -1092,7 +1092,7 @@ analyzeSignalP <- function(
                             sep = ' '
                         )
                     )
-                    singalPresults <- singalPresults[setdiff( 1:nrow(singalPresults), toLargeProb),]
+                    singalPresults <- singalPresults[setdiff( seq_len(nrow(singalPresults)), toLargeProb),]
                 }
 
 
@@ -1494,7 +1494,7 @@ analyzeNetSurfP2 <- function(
 
                     # loop over domain alignment (migh be several)
                     orfPosList <- list()
-                    for (j in 1:nrow(localORFalignment)) {
+                    for (j in seq_len(nrow(localORFalignment))) {
                         domainInfo <-
                             convertCoordinatsTranscriptToGenomic(
                                 transcriptCoordinats =  localORFalignment[j, ],
@@ -1820,7 +1820,7 @@ analyzeIUPred2A <- function(
             )
         }
 
-        disRes$rowId <- 1:nrow(disRes)
+        disRes$rowId <- seq_len(nrow(disRes))
 
         ### Convert to GRanges
         disResGr <- GRanges(
@@ -1961,7 +1961,7 @@ analyzeIUPred2A <- function(
 
                     # loop over domain alignment (migh be several)
                     orfPosList <- list()
-                    for (j in 1:nrow(localORFalignment)) {
+                    for (j in seq_len(nrow(localORFalignment))) {
                         domainInfo <-
                             convertCoordinatsTranscriptToGenomic(
                                 transcriptCoordinats =  localORFalignment[j, ],

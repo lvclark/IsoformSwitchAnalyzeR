@@ -1564,7 +1564,7 @@ importGTF <- function(
                                      start(localExons),
                                      end(localExons)), ]
                 localExons$exon_id <-
-                    paste('exon_', 1:length(localExons), sep = '')
+                    paste('exon_', seq_along(localExons), sep = '')
 
                 ### Extract strand specific ORF info
                 cds <- as.data.frame(myCDSedges)
@@ -1594,7 +1594,7 @@ importGTF <- function(
                     c(annoatedStartGRangesPlus,
                       annoatedStartGRangesMinus)
                 annoatedStartGRanges$orf_id <-
-                    paste('cds_', 1:length(annoatedStartGRanges), sep = '')
+                    paste('cds_', seq_along(annoatedStartGRanges), sep = '')
 
                 # end
                 annoatedEndGRangesPlus  <-
@@ -1619,7 +1619,7 @@ importGTF <- function(
                 annoatedEndGRanges <-
                     c(annoatedEndGRangesPlus, annoatedEndGRangesMinus)
                 annoatedEndGRanges$orf_id <-
-                    paste('stop_', 1:length(annoatedEndGRanges), sep = '')
+                    paste('stop_', seq_along(annoatedEndGRanges), sep = '')
 
                 # combine
                 annotatedORFGR <-
@@ -1690,21 +1690,21 @@ importGTF <- function(
                 # cumsum
                 myExonPlus$cumSum <-
                     unlist(sapply(plusSplit , function(aVec) {
-                        cumsum(c(0, aVec))[1:(length(aVec))]
+                        cumsum(c(0, aVec))[seq_along(aVec)]
                     }))
                 myExonMinus$cumSum <-
                     unlist(sapply(minusSplit, function(aVec) {
-                        cumsum(c(0, rev(aVec)))[(length(aVec)):1] # reverse
+                        cumsum(c(0, rev(aVec)))[rev(seq_along(aVec))] # reverse
                     }))
 
                 # exon number
                 myExonPlus$nrExon <-
                     unlist(sapply(plusSplit, function(aVec) {
-                        1:length(aVec)
+                        seq_along(aVec)
                     }))
                 myExonMinus$nrExon <-
                     unlist(sapply(minusSplit, function(aVec) {
-                        1:length(aVec)
+                        seq_along(aVec)
                     }))
 
                 # total nr exons
@@ -1938,7 +1938,7 @@ importGTF <- function(
                                      start(localExons),
                                      end(localExons)), ]
                 localExons$exon_id <-
-                    paste('exon_', 1:length(localExons), sep = '')
+                    paste('exon_', seq_along(localExons), sep = '')
 
                 ### Extract strand specific ORF info
                 cds <- as.data.frame(myCDSedges)
@@ -1968,7 +1968,7 @@ importGTF <- function(
                     c(annoatedStartGRangesPlus,
                       annoatedStartGRangesMinus)
                 annoatedStartGRanges$orf_id <-
-                    paste('cds_', 1:length(annoatedStartGRanges), sep = '')
+                    paste('cds_', seq_along(annoatedStartGRanges), sep = '')
 
                 # end
                 annoatedEndGRangesPlus  <-
@@ -1993,7 +1993,7 @@ importGTF <- function(
                 annoatedEndGRanges <-
                     c(annoatedEndGRangesPlus, annoatedEndGRangesMinus)
                 annoatedEndGRanges$orf_id <-
-                    paste('stop_', 1:length(annoatedEndGRanges), sep = '')
+                    paste('stop_', seq_along(annoatedEndGRanges), sep = '')
 
                 # combine
                 annotatedORFGR <-
@@ -2064,21 +2064,21 @@ importGTF <- function(
                 # cumsum
                 myExonPlus$cumSum <-
                     unlist(sapply(plusSplit , function(aVec) {
-                        cumsum(c(0, aVec))[1:(length(aVec))]
+                        cumsum(c(0, aVec))[seq_along(aVec)]
                     }))
                 myExonMinus$cumSum <-
                     unlist(sapply(minusSplit, function(aVec) {
-                        cumsum(c(0, rev(aVec)))[(length(aVec)):1] # reverse
+                        cumsum(c(0, rev(aVec)))[rev(seq_along(aVec))] # reverse
                     }))
 
                 # exon number
                 myExonPlus$nrExon <-
                     unlist(sapply(plusSplit, function(aVec) {
-                        1:length(aVec)
+                        seq_along(aVec)
                     }))
                 myExonMinus$nrExon <-
                     unlist(sapply(minusSplit, function(aVec) {
-                        1:length(aVec)
+                        seq_along(aVec)
                     }))
 
                 # total nr exons
@@ -2944,7 +2944,7 @@ importIsoformExpression <- function(
                     } else {
                         return(
                             data.frame(
-                                newId = paste0(aDF$fileNames, '_', 1:aDF$Freq),
+                                newId = paste0(aDF$fileNames, '_', seq_len(aDF$Freq)),
                                 stringsAsFactors = FALSE
                             )
                         )
@@ -3097,7 +3097,7 @@ importIsoformExpression <- function(
 
             ### Reorder
             reorderCols <- function(x) {
-                x[,c( ncol(x), 1:(ncol(x)-1) )]
+                x[,c( ncol(x), seq_len(ncol(x)-1) )]
             }
 
             localDataList$abundance <- reorderCols( localDataList$abundance)

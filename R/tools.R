@@ -60,7 +60,7 @@ testFullRank <- function(localDesign) {
 
     ### Make model
     localModel <- model.matrix(localFormula, data = localDesign)
-    indexToModify <- 1:length(unique( localDesign$condition ))
+    indexToModify <- seq_along(unique( localDesign$condition ))
     colnames(localModel)[indexToModify] <- gsub(
         pattern =  '^condition',
         replacement =  '',
@@ -170,7 +170,7 @@ myListToDf <- function(
         data.frame(matrix(NA, ncol = nCol, nrow = sum(sapply(aList, nrow))))
 
     ### use sapply to loop over the list and extract the entries one at the time
-    for (i in 1:nCol) {
+    for (i in seq_len(nCol)) {
         df[, i] <-
             as.vector(unlist(sapply(aList, function(x)
                 x[, i]))) # the combination of as.vector and unlist makes it posible to have any number of entries in each of the lists
@@ -206,7 +206,7 @@ allPairwiseFeatures <- function(aNameVec1, forceNonOverlap = FALSE) {
     ### Get comparisons
     count <- 2
     n <- length(aNameVec1)
-    for (i in 1:(n - 1)) {
+    for (i in seq_len(n - 1)) {
         for (j in count:n) {
             var1 <- c(var1, aNameVec1[i])
             var2 <- c(var2, aNameVec1[j])
@@ -836,7 +836,7 @@ cutGRanges <- function(
     ### Loop over exons that needs cutting and devide them
     newExonList <- list()
     exonsWithOverlaps <- unique(overlapsDf$queryHits)
-    for (i in 1:length(exonsWithOverlaps)) {
+    for (i in seq_along(exonsWithOverlaps)) {
         localGRange <-  aGRange[exonsWithOverlaps[i] , ]
 
         correspondingCutValues <-
@@ -851,7 +851,7 @@ cutGRanges <- function(
 
         newExonList[[i]] <-
             data.frame(
-                stat = valuesOfExon[1:(length(valuesOfExon) - 1)],
+                stat = valuesOfExon[seq_len(length(valuesOfExon) - 1)],
                 end = valuesOfExon[2:(length(valuesOfExon))]
             )
 
@@ -866,7 +866,7 @@ cutGRanges <- function(
 
     ### Combine with the exons that did not need cutting
     exonsWIthoutOverlap <-
-        aGRange[which(!1:length(aGRange) %in% overlapsDf$queryHits), ]
+        aGRange[which(!seq_along(aGRange) %in% overlapsDf$queryHits), ]
     combinedGRanges <- sort(c(newExonGRange, exonsWIthoutOverlap))
 
     return(combinedGRanges)

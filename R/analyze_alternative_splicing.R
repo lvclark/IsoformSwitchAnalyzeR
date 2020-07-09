@@ -202,7 +202,7 @@ if(TRUE) {
 
             } else { # multiple skipping
                 if(asTypes$MESI > 0) { # if a MESI have already been annotated, add a ',' to destinguish them from each other
-                    for(i in 1:nrow(coordinats)) {
+                    for(i in seq_len(nrow(coordinats))) {
                         if(i == 1) { # if a MESI have already been anotated
                             asTypes$MESI.start <- paste(asTypes$MESI.start, coordinats$start[i], sep=',') # start with a ','
                             asTypes$MESI.end   <- paste(asTypes$MESI.end,   coordinats$end[i],   sep=',') # start with a ','
@@ -213,7 +213,7 @@ if(TRUE) {
                     }
 
                 } else { # if NO MESI have been anotated before
-                    for(i in 1:nrow(coordinats)) {
+                    for(i in seq_len(nrow(coordinats))) {
                         if(is.na(asTypes$MESI.start)) {
                             asTypes$MESI.start <- paste( coordinats$start[i] )
                             asTypes$MESI.end   <- paste( coordinats$end[i] )
@@ -347,7 +347,7 @@ if(TRUE) {
             overlapIndex <- matrix(nrow=0, ncol=2) # data frame to store the overlapping exon coordinats
             #overlapIndexDF <- data.frame()
             count=2 # counter to avoid creating the same plot twice and from making plots against oneself
-            for(i in 1:(nrow(myExonInfoUniqSort)-1)) { # loop over the samples (except the last since that have already been compared with by the second loop)
+            for(i in seq_len(nrow(myExonInfoUniqSort)-1)) { # loop over the samples (except the last since that have already been compared with by the second loop)
                 for(j in count:nrow(myExonInfoUniqSort)) { # loop over the samples starting from 2, since I dont want to compare an exon with itself
                     # Check whether the two exons are overlapping
                     #if( .findOverlappingExons(exon1=myExonInfoUniqSort[i,], exon2=myExonInfoUniqSort[j,]) ) {
@@ -382,7 +382,7 @@ if(TRUE) {
 
                     ## make a pairwise comparason of the indexes that this exon overlaps with (nessesary since there migth be more than one)
                     count <- 2
-                    for(i in 1:(length(overlappingWith)-1)) { # loop over the samples (except the last since that have already been compared with by the second loop)
+                    for(i in seq_len(length(overlappingWith)-1)) { # loop over the samples (except the last since that have already been compared with by the second loop)
                         for(j in count:length(overlappingWith)) { # loop over the samples to compare with
                             # Compare the two exons to find thos that are NOT overlapping
                             #if( ! .findOverlappingExons(exon1=myExonInfoUniqSort[overlappingWith[i],], exon2=myExonInfoUniqSort[overlappingWith[j],]) ) {  # it is faster to compare the two exons again thant to look for the indexes in the overlapping table
@@ -541,7 +541,7 @@ if(TRUE) {
                     transcriptList[[minIndex]]$end < transcriptList[[notMinIndex]]$start[1]
                 ))
 
-                for(i in 1:ncol(CoordinatsSmallerThanStart)) {
+                for(i in seq_len(ncol(CoordinatsSmallerThanStart))) {
                     # if both start and end coordinats are smaller
                     if(all(CoordinatsSmallerThanStart[,i])) {
 
@@ -691,7 +691,7 @@ if(TRUE) {
                     transcriptWithIntronRetension <- which.max( sapply(numberOfReplicatesList, length ) )
                     transcriptWithOUTintronRetension <- (1:2)[!1:2 %in% transcriptWithIntronRetension]
 
-                    for(i in 1:( max(sapply(numberOfReplicatesList, length )) -1) ) {
+                    for(i in seq_len( max(sapply(numberOfReplicatesList, length )) -1) ) {
                         if(asTypes$ISI > 1) { # if a ISI have already been anotated for this transcript (the counter is above where it is > 1 (and not > 0))
 
                             # KVS Correction Feb 2019
@@ -746,7 +746,7 @@ if(TRUE) {
             overlappingExons2 <- rbind(c(0,0), overlappingExons, (numberOfExons+1))
             colnames(overlappingExons2) <- c('isoform1','isoform2')
 
-            for(i in 1:numberOfSkippingComparasons) {
+            for(i in seq_len(numberOfSkippingComparasons)) {
                 if(sum(exonSkippingIndex[i,]) == 0) { # if no exons were skipped
                     next
                 }
@@ -908,7 +908,7 @@ if(TRUE) {
 
 
         ### Filter transcript info
-        isoformsToAnalyzeIndex <- 1:nrow(transcriptData[["transcript_features"]])
+        isoformsToAnalyzeIndex <- seq_len(nrow(transcriptData[["transcript_features"]]))
 
         # Optional filters
         if('geneOK'         %in% filters) { isoformsToAnalyzeIndex <- .filterOKGenes(           transcriptData, isoformsToAnalyzeIndex) }
@@ -957,7 +957,7 @@ if(TRUE) {
         # Create statusbar (this statement also automaticlly prints the statusbar)
         if (useProgressBar) pb <- txtProgressBar(min = 1, max = numberOfGenes, style = 3)
 
-        for(geneIndex in 1:numberOfGenes) {
+        for(geneIndex in seq_len(numberOfGenes)) {
             #################### Extract indexs of isoforms belonging to the genes ####################
             ### extract information about the gene
             isoformsToAnalyzeWithinGeneIndexGlobal <- isoformsToAnalyzeIndex[which(geneIdsToAnalyze == geneIDs[geneIndex])] # get the global indexes for the gene analyzed now    #Indexing moved outside of loop
@@ -1030,7 +1030,7 @@ if(TRUE) {
                 }
 
                 # Loop over genes and extract info of which exons are expressed in which transcripts
-                for(i in 1:length(uniqueIsoformsIndex)) {
+                for(i in seq_along(uniqueIsoformsIndex)) {
                     ## extract exon features of minor isoform
                     isoformExonInfo <-  exonList[[ uniqIsoformNames[i] ]]
 
@@ -1053,7 +1053,7 @@ if(TRUE) {
                 startExons <- apply(exonIncludedTF,2,function(x) match(1, x))
                 endExons <- nrow(exonIncludedTF) + 1 - apply(exonIncludedTF,2,function(x) match(1, rev(x)))
 
-                for(i in 1:(nrow(exonIncludedTF)-1)) {
+                for(i in seq_len(nrow(exonIncludedTF)-1)) {
                     if( sum(exonIncludedTF[i,]) == 1 &  sum(exonIncludedTF[i+1,]) == 1 ) {
                         expressedIn1 <- which(as.logical(exonIncludedTF[i,])) # get the transcript index
                         expressedIn2 <- which(as.logical(exonIncludedTF[i+1,])) # get the transcript index
@@ -1099,7 +1099,7 @@ if(TRUE) {
 
             ######## Classify the rest of the AS types ########
             # loop over the unique isoforms to make the AS type comparason
-            for(i in 1:length(uniqueIsoformsIndex)) { # i <- 2
+            for(i in seq_along(uniqueIsoformsIndex)) { # i <- 2
 
                 if(major) { # if I compare to major
                     if(uniqueIsoformsIndex[i] %in% maxIsoformIndex) {next} # if this isoform is the major
@@ -1227,7 +1227,7 @@ if(TRUE) {
 
         ori_col_names <- colnames(mcols(originalTranscriptData[[1]]))
         ori_col_names_no_spliceR <- substr(ori_col_names, 9, nchar(ori_col_names))
-        for (i in 1:length(ori_col_names))
+        for (i in seq_along(ori_col_names))
         {
             mcols(originalTranscriptData[[1]])[ori_col_names[i]] <- transcriptData[[1]][,ori_col_names_no_spliceR[i]]
         }

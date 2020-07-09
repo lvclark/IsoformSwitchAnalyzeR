@@ -208,7 +208,7 @@ analyzeORF <- function(
         annoatedStartGRanges <-
             unique(c(annoatedStartGRangesPlus, annoatedStartGRangesMinus))
         annoatedStartGRanges$id <-
-            paste('cds_', 1:length(annoatedStartGRanges), sep = '')
+            paste('cds_', seq_along(annoatedStartGRanges), sep = '')
 
         ### Extract exons
         localExons <-  switchAnalyzeRlist$exons[which(
@@ -224,7 +224,7 @@ analyzeORF <- function(
                              start(localExons),
                              end(localExons)), ]
         localExons$exon_id <-
-            paste('exon_', 1:length(localExons), sep = '')
+            paste('exon_', seq_along(localExons), sep = '')
 
 
         ### Find overlaps
@@ -272,7 +272,7 @@ analyzeORF <- function(
             unlist(sapply(
                 split(myExonPlus$width, myExonPlus$isoform_id),
                 function(aVec) {
-                    cumsum(c(0, aVec))[1:(length(aVec))]
+                    cumsum(c(0, aVec))[seq_along(aVec)]
                 }
             ))
         myExonMinus <- myExons[which(myExons$strand == '-'), ]
@@ -280,7 +280,7 @@ analyzeORF <- function(
             unlist(sapply(
                 split(myExonMinus$width, myExonMinus$isoform_id),
                 function(aVec) {
-                    cumsum(c(0, rev(aVec)))[(length(aVec)):1] # reverse
+                    cumsum(c(0, rev(aVec)))[rev(seq_along(aVec))] # reverse
                 }
             ))
 
@@ -1183,7 +1183,7 @@ extractSequence <- function(
 
                                         # loop over domain alignment (migh be several)
                                         orfPosList <- list()
-                                        for (j in 1:nrow(localORFalignment)) {
+                                        for (j in seq_len(nrow(localORFalignment))) {
                                             domainInfo <-
                                                 convertCoordinatsTranscriptToGenomic(
                                                     transcriptCoordinats =  localORFalignment[j, ],
@@ -1253,7 +1253,7 @@ extractSequence <- function(
                     end = indexVec[-1]
                 )
                 n <- nrow(indexDf)
-                indexDf$file <- paste0('_subset_', 1:n,'_of_',n)
+                indexDf$file <- paste0('_subset_', seq_len(n),'_of_',n)
 
                 ### loop over index and make files
                 tmp <- plyr::ddply(indexDf, .variables = 'file', .fun = function(aDF) { # aDF <- indexDf[1,]
@@ -1460,7 +1460,7 @@ myAllFindORFsinSeq <- function(
         if (tail(myRle$values, 1) == 'start') {
             localCodonsOfInterest <-
                 localCodonsOfInterest[
-                    1:(nrow(localCodonsOfInterest) - tail(myRle$lengths, 1))
+                    seq_len(nrow(localCodonsOfInterest) - tail(myRle$lengths, 1))
                 , ]
 
             #redo rle nessesary
@@ -1479,12 +1479,12 @@ myAllFindORFsinSeq <- function(
         # Remove duplicates to make sure that I only take the first start codon (if multiple are pressent) and the first stop codon if multiple are pressent
         localCodonsOfInterest <-
             localCodonsOfInterest[
-                c(1, cumsum(myRle$lengths) + 1)[1:length(myRle$lengths)]
+                c(1, cumsum(myRle$lengths) + 1)[seq_along(myRle$lengths)]
             , ]
 
         ### Loop over the resulting table and concattenate the ORFs
         localCodonsOfInterest$myOrf <-
-            as.vector(sapply(1:(nrow(
+            as.vector(sapply(seq_len(nrow(
                 localCodonsOfInterest
             ) / 2), function(x)
                 rep(x, 2)))

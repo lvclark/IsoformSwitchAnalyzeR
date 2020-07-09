@@ -154,7 +154,7 @@ isoformSwitchTestDRIMSeq <- function(
 
         ### Make model
         localModel <- model.matrix(localFormula, data = localDesign)
-        indexToModify <- 1:nConditions
+        indexToModify <- seq_len(nConditions)
         colnames(localModel)[indexToModify] <- gsub(
             pattern =  '^condition',
             replacement =  '',
@@ -752,7 +752,7 @@ isoformSwitchTestDEXSeq <- function(
 
                 ### Make model
                 localModel <- model.matrix(localFormula, data = localDesign)
-                indexToModify <- 1:length(unique( localDesign$condition ))
+                indexToModify <- seq_along(unique( localDesign$condition ))
                 colnames(localModel)[indexToModify] <- gsub(
                     pattern =  '^condition',
                     replacement =  '',
@@ -1559,7 +1559,7 @@ extractSwitchOverlap <- function(
     ### Helper function
     mfGGplotColors <- function(n) {
         hues = seq(15, 375, length=n+1)
-        hcl(h=hues, l=65, c=100)[1:n]
+        hcl(h=hues, l=65, c=100)[seq_len(n)]
     }
 
     backUpDf <-
@@ -1879,7 +1879,7 @@ extractTopSwitches <- function(
                             n2 <- n
                         }
 
-                        return(aDF[1:n2, ])
+                        return(aDF[seq_len(n2), ])
                     }
                 )
 
@@ -1891,7 +1891,7 @@ extractTopSwitches <- function(
 
         }
 
-        dataDF2$Rank <- 1:nrow(dataDF2)
+        dataDF2$Rank <- seq_len(nrow(dataDF2))
         return(dataDF2)
     }
 
@@ -2004,7 +2004,7 @@ extractTopSwitches <- function(
                             n2 <- n
                         }
 
-                        return(aDF[1:n2, ])
+                        return(aDF[seq_len(n2), ])
                     }
                 )
 
@@ -2015,7 +2015,7 @@ extractTopSwitches <- function(
         dataDF2$IF2 <- round(dataDF2$IF2, digits = 3)
         dataDF2$dIF <- round(dataDF2$dIF, digits = 3)
 
-        dataDF2$Rank <- 1:nrow(dataDF2)
+        dataDF2$Rank <- seq_len(nrow(dataDF2))
 
         return(dataDF2)
     }

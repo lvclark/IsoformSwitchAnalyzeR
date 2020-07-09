@@ -269,7 +269,7 @@ analyzeSwitchConsequences <- function(
                 'isoformUpregulated', 'isoformDownregulated'
             )])
         pairwiseIsoComparisonUniq$comparison <-
-            1:nrow(pairwiseIsoComparisonUniq)
+            seq_len(nrow(pairwiseIsoComparisonUniq))
 
         ### Generate size reduced switchAnalyzeRList
         minimumSwitchList <- makeMinimumSwitchList(

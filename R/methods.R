@@ -606,7 +606,7 @@ createSwitchAnalyzeRlist <- function(
         isoformFeatures$iso_ref <- stringr::str_c(
             'isoComp',
             '_',
-            addZeroes( 1:nrow(isoformFeatures) )
+            addZeroes( seq_len(nrow(isoformFeatures)) )
         )
 
         ### Reorder

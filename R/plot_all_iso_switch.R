@@ -329,11 +329,11 @@ switchPlotTopSwitches <- function(
                             n2 <- n
                         }
 
-                        localDataSorted <- localDataSorted[1:n2, ]
+                        localDataSorted <- localDataSorted[seq_len(n2), ]
                     }
 
                     ### Add rank
-                    localDataSorted$rank <- 1:nrow(localDataSorted)
+                    localDataSorted$rank <- seq_len(nrow(localDataSorted))
 
                     # convert to appropriate text
                     neededChars <- max(nchar(localDataSorted$rank))
