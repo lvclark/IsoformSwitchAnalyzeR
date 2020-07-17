@@ -1324,14 +1324,14 @@ importGTF <- function(
             ### Ensembl
             if( 'gene_biotype' %in% colnames(mcols(mfGTF)) ) {
                 toExclude <-  mfGTF$gene_biotype == 'TEC'
-                if( any( toExclude ) ) {
+                if( any( toExclude, na.rm = TRUE) ) {
                     mfGTF <- mfGTF[-which( toExclude ),]
                 }
             }
             ### Gencode
             if( 'gene_type' %in% colnames(mcols(mfGTF)) ) {
                 toExclude <-  mfGTF$gene_type == 'TEC'
-                if( any( toExclude ) ) {
+                if( any( toExclude, na.rm = TRUE) ) {
                     mfGTF <- mfGTF[-which( toExclude ),]
                 }
 
