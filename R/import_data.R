@@ -4802,3 +4802,89 @@ preFilter <- function(
     ### return result
     return(switchAnalyzeRlist)
 }
+
+importTxDb <- function(
+    TxDb, geneid2genename,
+    isoformNtFasta = NULL,
+    extractAaSeq = FALSE,
+    addAnnotatedORFs = TRUE,
+    onlyConsiderFullORF = FALSE,
+    removeNonConvensionalChr = FALSE,
+    ignoreAfterBar = TRUE,
+    ignoreAfterSpace = TRUE,
+    ignoreAfterPeriod = FALSE,
+    removeTECgenes = TRUE,
+    PTCDistance = 50,
+    removeFusionTranscripts = TRUE,
+    quiet = FALSE
+){
+    # Extract transcript information from TxDb object
+    tbg <- transcriptsBy(TxDb, by = "gene")
+    alltxpt <- unlist(lapply(tbg, function(x) x$tx_name))
+    nTxptPerGene <- lengths(tbg)
+    genePerTxpt <- rep(names(tbg), times = nTxptPerGene)
+
+    ### Make annotation
+    myIsoAnot <- data.frame(
+        isoform_id = alltxpt,
+        gene_id = genePerTxpt,
+        condition_1 = "plaseholder1",
+        condition_2 = "plaseholder2",
+        gene_name = geneid2genename[genePerTxpt],
+        gene_biotype = NA, # does this need to be filled in?
+        iso_biotype = NA, # does this need to be filled in?
+        class_code = '=',
+        gene_overall_mean = 0,
+        gene_value_1 = 0,
+        gene_value_2 = 0,
+        gene_stderr_1 = NA,
+        gene_stderr_2 = NA,
+        gene_log2_fold_change = 0,
+        gene_p_value = 1,
+        gene_q_value = 1,
+        iso_overall_mean = 0,
+        iso_value_1 = 0,
+        iso_value_2 = 0,
+        iso_stderr_1 = NA,
+        iso_stderr_2 = NA,
+        iso_log2_fold_change = 0,
+        iso_p_value = 1,
+        iso_q_value = 1,
+        IF_overall = NA,
+        IF1 = NA,
+        IF2 = NA,
+        dIF = NA,
+        isoform_switch_q_value = NA,
+        gene_switch_q_value = NA,
+        stringsAsFactors = FALSE
+    )
+    
+    ### Get exons
+    ebt <- exonsBy(TxDb, by = "tx")
+    allexon <- unname(unlist(lapply(ebt, function(x) x$exon_id)))
+    nExonPerTxpt <- lengths(ebt)
+    txptPerExon <- rep(as.integer(names(ebt)), times = nExonPerTxpt)
+    txpt <- transcripts(TxDb)
+    txptPerExonNames <- txpt$tx_name[match(txptPerExon, txpt$tx_id)]
+    
+    myExons <- exons(TxDb)
+    myExons <- myExons[myExons$exon_id %in% allexon]
+    myExons$isoform_id <- txptPerExonNames[match(myExons$exon_id, allexon)]
+    myExons$gene_id <- genePerTxpt[match(myExons$isoform_id, alltxpt)]
+    myExons$exon_id <- NULL
+    myExons <- myExons[!is.na(myExons$isoform_id) & !is.na(myExons$gene_id)]
+    
+    ### Create switchList
+    localSwichList <- createSwitchAnalyzeRlist(
+        isoformFeatures = myIsoAnot,
+        exons = myExons,
+        designMatrix = designMatrix,
+        isoformCountMatrix = repExp,
+        removeFusionTranscripts = removeFusionTranscripts,
+        sourceId = 'TxDb'
+    )
+    
+    if(addAnnotatedORFs){
+        # Use CDS info to put ORFs in
+    }
+}
