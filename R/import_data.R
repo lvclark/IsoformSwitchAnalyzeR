@@ -4874,6 +4874,30 @@ importTxDb <- function(
     myExons$exon_id <- NULL
     myExons <- myExons[!is.na(myExons$isoform_id) & !is.na(myExons$gene_id)]
     
+    # create replicates
+    nrRep <-
+        data.frame(
+            condition = c('plaseholder1', 'plaseholder2'),
+            nrReplicates = c(NA, NA),
+            row.names = NULL,
+            stringsAsFactors = FALSE
+        )
+    
+    # create dummy feature
+    repExp <- data.frame(
+        isoform_id = myIsoAnot$isoform_id,
+        plaseholder1 = NA,
+        plaseholder2 = NA,
+        stringsAsFactors = FALSE
+    )
+    
+    designMatrix <-
+        data.frame(
+            sampleID = c('plaseholder1', 'plaseholder2'),
+            condition = c('plaseholder1', 'plaseholder2'),
+            stringsAsFactors = FALSE
+        )
+    
     ### Create switchList
     localSwichList <- createSwitchAnalyzeRlist(
         isoformFeatures = myIsoAnot,
