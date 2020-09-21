@@ -4905,6 +4905,55 @@ importTxDb <- function(
     )
     
     if(addAnnotatedORFs){
+        message("Adding annotated ORFs...")
         # Use CDS info to put ORFs in
+        cbt <- GenomicFeatures::cdsBy(TxDb, by = "tx")
+        ebt <- GenomicFeatures::exonsBy(TxDb, by = "tx")
+        orfInfo <- data.frame(isoform_id = genePerTxpt$TXNAME,
+                              orfTranscriptStart = NA_integer_,
+                              orfTranscriptEnd = NA_integer_,
+                              orfTranscriptLength = NA_integer_,
+                              orfStarExon = NA_integer_,
+                              orfEndExon = NA_integer_,
+                              orfStartGenomic = NA_integer_,
+                              orfEndGenomic = NA_integer_,
+                              stopDistanceToLastJunction = NA_integer_,
+                              stopIndex = NA_integer_,
+                              PTC = FALSE,
+                              stringsAsFactors = FALSE)
+        txpt <- transcripts(TxDb)
+        txindex <- match(genePerTxpt$TXNAME, txpt$tx_name)
+        txnums <- as.character(txpt$tx_id[txindex])
+        for(i in seq_along(genePerTxpt$TXNAME)){
+            this_cds <- cbt[[txnums[i]]]
+            this_ex <- ebt[[txnums[i]]]
+            if(is.null(this_cds)) next
+            this_strand <- as.character(strand(this_cds)[1])
+            left <- min(start(this_cds))
+            right <- max(end(this_cds))
+            first_exon <- min(this_cds$exon_rank)
+            leading_exons <- this_ex[this_ex$exon_rank <= first_exon]
+            first_cds <- this_cds[this_cds$exon_rank == first_exon]
+            orfInfo$orfTranscriptStart[i] <-
+                sum(width(leading_exons)) - width(first_cds) + 1
+            orfInfo$orfTranscriptEnd[i] <-
+                orfInfo$orfTranscriptStart[i] + sum(width(this_cds)) - 1
+            if(this_strand == "-"){
+                orfInfo$orfStartGenomic[i] <- right
+                orfInfo$orfEndGenomic[i] <- left
+                last_exon <- max(this_ex$exon_rank)
+                orfInfo$orfStarExon[i] <- last_exon - first_exon + 1
+                orfInfo$orfEndExon[i] <- last_exon - max(this_cds$exon_rank) + 1
+            } else {
+                orfInfo$orfStartGenomic[i] <- left
+                orfInfo$orfEndGenomic[i] <- right
+                orfInfo$orfStarExon[i] <- first_exon
+                orfInfo$orfEndExon[i] <- max(this_cds$exon_rank)
+            }
+        }
+        orfInfo$orfTranscriptLength <-
+            orfInfo$orfTranscriptEnd - orfInfo$orfTranscriptStart + 1
+        # Need to add stopDistanceToLastJunction, stopIndex, PTC
+        # need to add orfInfo to switchList
     }
 }
