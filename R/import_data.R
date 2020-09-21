@@ -4818,19 +4818,17 @@ importTxDb <- function(
     removeFusionTranscripts = TRUE,
     quiet = FALSE
 ){
-    # Extract transcript information from TxDb object
-    tbg <- transcriptsBy(TxDb, by = "gene")
-    alltxpt <- unlist(lapply(tbg, function(x) x$tx_name))
-    nTxptPerGene <- lengths(tbg)
-    genePerTxpt <- rep(names(tbg), times = nTxptPerGene)
+    # Extract transcript to gene mapping from TxDb object
+    genePerTxpt <- select(TxDb, keys(TxDb, "TXNAME"), columns = "GENEID", keytype = "TXNAME")
+    genePerTxpt <- genePerTxpt[!is.na(genePerTxpt$GENEID),]
 
     ### Make annotation
     myIsoAnot <- data.frame(
-        isoform_id = alltxpt,
-        gene_id = genePerTxpt,
+        isoform_id = genePerTxpt$TXNAME,
+        gene_id = genePerTxpt$GENEID,
         condition_1 = "plaseholder1",
         condition_2 = "plaseholder2",
-        gene_name = geneid2genename[genePerTxpt],
+        gene_name = geneid2genename[genePerTxpt$GENEID],
         gene_biotype = NA, # does this need to be filled in?
         iso_biotype = NA, # does this need to be filled in?
         class_code = '=',
@@ -4860,17 +4858,15 @@ importTxDb <- function(
     )
     
     ### Get exons
-    ebt <- exonsBy(TxDb, by = "tx")
-    allexon <- unname(unlist(lapply(ebt, function(x) x$exon_id)))
-    nExonPerTxpt <- lengths(ebt)
-    txptPerExon <- rep(as.integer(names(ebt)), times = nExonPerTxpt)
-    txpt <- transcripts(TxDb)
-    txptPerExonNames <- txpt$tx_name[match(txptPerExon, txpt$tx_id)]
+    txptPerExon <- select(TxDb, keys(TxDb, "EXONID"),
+                          columns = c("EXONID", "TXNAME", "GENEID"), keytype = "EXONID")
+    txptPerExon$EXONID <- as.integer(txptPerExon$EXONID)
     
     myExons <- exons(TxDb)
-    myExons <- myExons[myExons$exon_id %in% allexon]
-    myExons$isoform_id <- txptPerExonNames[match(myExons$exon_id, allexon)]
-    myExons$gene_id <- genePerTxpt[match(myExons$isoform_id, alltxpt)]
+    stopifnot(identical(myExons$exon_id, txptPerExon$EXONID))
+
+    myExons$isoform_id <- txptPerExon$TXNAME
+    myExons$gene_id <- txptPerExon$GENEID
     myExons$exon_id <- NULL
     myExons <- myExons[!is.na(myExons$isoform_id) & !is.na(myExons$gene_id)]
     
