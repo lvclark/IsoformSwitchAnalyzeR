@@ -4863,6 +4863,8 @@ importTxDb <- function(
     txptPerExon$EXONID <- as.integer(txptPerExon$EXONID)
     
     myExons <- exons(TxDb)
+    myExons <- myExons[myExons$exon_id %in% txptPerExon$EXONID]
+    myExons <- myExons[match(txptPerExon$EXONID, myExons$exon_id)]
     stopifnot(identical(myExons$exon_id, txptPerExon$EXONID))
 
     myExons$isoform_id <- txptPerExon$TXNAME
@@ -4929,31 +4931,47 @@ importTxDb <- function(
             this_ex <- ebt[[txnums[i]]]
             if(is.null(this_cds)) next
             this_strand <- as.character(strand(this_cds)[1])
-            left <- min(start(this_cds))
-            right <- max(end(this_cds))
+            to_trim <- 3 # for stop codon
+
             first_exon <- min(this_cds$exon_rank)
             leading_exons <- this_ex[this_ex$exon_rank <= first_exon]
             first_cds <- this_cds[this_cds$exon_rank == first_exon]
+            
+            last_exon <- max(this_ex$exon_rank)
+            last_cds <- max(this_cds$exon_rank)
+            
+            orfInfo$stopIndex[i] <- last_exon - last_cds ## needs to be fixed?
+            # put something in here for stopDistanceToLastJunction
+            
+            # if necessary, shift last_cds to be final amino acid rather than stop codon
+            last_cds_width <- width(this_cds[this_cds$exon_rank == last_cds])
+            while(last_cds > 0 && last_cds_width <= to_trim){
+                to_trim <- to_trim - last_cds_width
+                last_cds <- last_cds - 1
+                last_cds_width <- width(this_cds[this_cds$exon_rank == last_cds])
+            }
+            if(last_cds == 0) next # whole ORF is just a stop codon
+            
             orfInfo$orfTranscriptStart[i] <-
                 sum(width(leading_exons)) - width(first_cds) + 1
             orfInfo$orfTranscriptEnd[i] <-
-                orfInfo$orfTranscriptStart[i] + sum(width(this_cds)) - 1
+                orfInfo$orfTranscriptStart[i] + sum(width(this_cds)) - 4 # trim stop codon
+             
             if(this_strand == "-"){
-                orfInfo$orfStartGenomic[i] <- right
-                orfInfo$orfEndGenomic[i] <- left
-                last_exon <- max(this_ex$exon_rank)
+                orfInfo$orfStartGenomic[i] <- end(first_cds)
+                orfInfo$orfEndGenomic[i] <- start(this_cds[this_cds$exon_rank == last_cds]) + to_trim
                 orfInfo$orfStarExon[i] <- last_exon - first_exon + 1
-                orfInfo$orfEndExon[i] <- last_exon - max(this_cds$exon_rank) + 1
+                orfInfo$orfEndExon[i] <- last_exon - last_cds + 1
             } else {
-                orfInfo$orfStartGenomic[i] <- left
-                orfInfo$orfEndGenomic[i] <- right
+                orfInfo$orfStartGenomic[i] <- start(first_cds)
+                orfInfo$orfEndGenomic[i] <- end(this_cds[this_cds$exon_rank == last_cds]) - to_trim
                 orfInfo$orfStarExon[i] <- first_exon
-                orfInfo$orfEndExon[i] <- max(this_cds$exon_rank)
+                orfInfo$orfEndExon[i] <- last_cds
             }
         }
         orfInfo$orfTranscriptLength <-
             orfInfo$orfTranscriptEnd - orfInfo$orfTranscriptStart + 1
-        # Need to add stopDistanceToLastJunction, stopIndex, PTC
+        # Need to add stopDistanceToLastJunction, PTC
         # need to add orfInfo to switchList
     }
 }
