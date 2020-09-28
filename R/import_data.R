@@ -4940,7 +4940,11 @@ importTxDb <- function(
             last_exon <- max(this_ex$exon_rank)
             last_cds <- max(this_cds$exon_rank)
             
-            orfInfo$stopIndex[i] <- last_exon - last_cds ## needs to be fixed?
+            if(this_strand == "-"){
+                orfInfo$stopIndex[i] <- last_exon - last_cds + 1
+            } else {
+                orfInfo$stopIndex[i] <- last_cds
+            }
             # put something in here for stopDistanceToLastJunction
             
             # if necessary, shift last_cds to be final amino acid rather than stop codon
