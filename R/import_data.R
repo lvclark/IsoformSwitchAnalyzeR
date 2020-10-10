@@ -4908,11 +4908,11 @@ importTxDb <- function(
     
     if(addAnnotatedORFs){
         message("Adding annotated ORFs...")
-        # Use CDS info to put ORFs in
+        # extract info from TxDb, using CDS to find ORFs
         cbt <- GenomicFeatures::cdsBy(TxDb, by = "tx")
         ebt <- GenomicFeatures::exonsBy(TxDb, by = "tx")
         
-        txpt <- transcripts(TxDb)
+        txpt <- GenomicFeatures::transcripts(TxDb)
         txindex <- match(genePerTxpt$TXNAME, txpt$tx_name)
         txnums <- as.character(txpt$tx_id[txindex])
         
@@ -4922,6 +4922,50 @@ importTxDb <- function(
         orflen <- orflen[orflen > 0]
         ebt <- ebt[names(cbt)]
         
+        # strand with respect to CDS object
+        cds_strand <- strand(txpt[match(names(cbt), txpt$tx_id)])
+        cds_top <- which(cds_strand == "+")
+        cds_bot <- which(cds_strand == "-")
+        
+        # determine starting position within transcript
+        cds_width <- width(cbt)
+        exon_width <- width(ebt)
+        cds_ranks <- mcols(cbt, level = "within")[,"exon_rank"]
+        exon_ranks <- mcols(ebt, level = "within")[,"exon_rank"]
+        cds_start_exon <- min(cds_ranks)
+        leading_width <- sum(exon_width[exon_ranks < cds_start_exon])
+        ex_st <- unlist(start(ebt[exon_ranks == cds_start_exon]))
+        cds_st <- unlist(start(cbt[cds_ranks == cds_start_exon]))
+        ex_end <- unlist(end(ebt[exon_ranks == cds_start_exon]))
+        cds_end <- unlist(end(cbt[cds_ranks == cds_start_exon]))
+        pad <- integer(length(cbt))
+        pad[cds_top] <- cds_st[cds_top] - ex_st[cds_top]
+        pad[cds_bot] <- ex_end[cds_bot] - cds_end[cds_bot]
+        orfstart <- leading_width + pad + 1
+
+        # determine exon index for stop codon, start and end of ORF
+        cds_end_exon <- max(cds_ranks)
+        txpt_end_exon <- max(exon_ranks)
+        stopindex <- startexon <- endexon <- integer(length(cbt))
+        startexon[cds_top] <- cds_start_exon[cds_top]
+        startexon[cds_bot] <- txpt_end_exon[cds_bot] - cds_start_exon[cds_bot] + 1L
+        stopindex[cds_top] <- cds_end_exon[cds_top]
+        stopindex[cds_bot] <- txpt_end_exon[cds_bot] - cds_end_exon[cds_bot] + 1L
+        # adjust end exon when stop codon spans junction
+        totrim <- rep(3L, length(cbt))
+        cds_end_exon2 <- cds_end_exon
+        last_cds_width <- unlist(cds_width[cds_ranks == cds_end_exon2])
+        adjust <- totrim > 0L
+        while(any(adjust)){
+            totrim <- totrim - last_cds_width
+            adjust <- totrim > 0L
+            cds_end_exon2[adjust] <- cds_end_exon2[adjust] - 1L
+            last_cds_width <- unlist(cds_width[cds_ranks == cds_end_exon2])
+        }
+        endexon[cds_top] <- cds_end_exon2[cds_top]
+        endexon[cds_bot] <- txpt_end_exon[cds_bot] - cds_end_exon2[cds_bot] + 1L
+        
+        # set up output
         orfInfo <- data.frame(isoform_id = genePerTxpt$TXNAME,
                               orfTranscriptStart = NA_integer_,
                               orfTranscriptEnd = NA_integer_,
@@ -4935,56 +4979,29 @@ importTxDb <- function(
                               PTC = FALSE,
                               stringsAsFactors = FALSE)
         
-        orfInfo$orfTranscriptLength[match(names(cbt), txnums)] <- orflen
-        
-        for(i in seq_along(genePerTxpt$TXNAME)){
-            this_cds <- cbt[[txnums[i]]]
-            this_ex <- ebt[[txnums[i]]]
-            if(is.null(this_cds)) next
-            this_strand <- as.character(strand(this_cds)[1])
-            to_trim <- 3 # for stop codon
+        # fill in columns that we have so far
+        rowindex <- match(names(cbt), txnums)
+        orfInfo$orfTranscriptLength[rowindex] <- orflen
+        orfInfo$orfTranscriptStart[rowindex] <- orfstart
+        orfInfo$orfStarExon[rowindex] <- startexon
+        orfInfo$orfEndExon[rowindex] <- endexon
+        orfInfo$stopIndex[rowindex] <- stopindex
 
-            first_exon <- min(this_cds$exon_rank)
-            leading_exons <- this_ex[this_ex$exon_rank <= first_exon]
-            first_cds <- this_cds[this_cds$exon_rank == first_exon]
-            
-            last_exon <- max(this_ex$exon_rank)
-            last_cds <- max(this_cds$exon_rank)
-            
-            if(this_strand == "-"){
-                orfInfo$stopIndex[i] <- last_exon - last_cds + 1
-            } else {
-                orfInfo$stopIndex[i] <- last_cds
-            }
-            # put something in here for stopDistanceToLastJunction
-            
-            # if necessary, shift last_cds to be final amino acid rather than stop codon
-            last_cds_width <- width(this_cds[this_cds$exon_rank == last_cds])
-            while(last_cds > 0 && last_cds_width <= to_trim){
-                to_trim <- to_trim - last_cds_width
-                last_cds <- last_cds - 1
-                last_cds_width <- width(this_cds[this_cds$exon_rank == last_cds])
-            }
-            if(last_cds == 0) next # whole ORF is just a stop codon
-            
-            orfInfo$orfTranscriptStart[i] <-
-                sum(width(leading_exons)) - width(first_cds) + 1
-            
-             
-            if(this_strand == "-"){
-                orfInfo$orfStartGenomic[i] <- end(first_cds)
-                orfInfo$orfEndGenomic[i] <- start(this_cds[this_cds$exon_rank == last_cds]) + to_trim
-                orfInfo$orfStarExon[i] <- last_exon - first_exon + 1
-                orfInfo$orfEndExon[i] <- last_exon - last_cds + 1
-            } else {
-                orfInfo$orfStartGenomic[i] <- start(first_cds)
-                orfInfo$orfEndGenomic[i] <- end(this_cds[this_cds$exon_rank == last_cds]) - to_trim
-                orfInfo$orfStarExon[i] <- first_exon
-                orfInfo$orfEndExon[i] <- last_cds
-            }
-        }
         orfInfo$orfTranscriptEnd <-
             orfInfo$orfTranscriptStart + orfInfo$orfTranscriptLength - 1
+        
+        # Genomic coordinates
+        genorf <- GenomicFeatures::mapFromTranscripts(GRanges(names(cbt),
+                                             IRanges(start = orfstart,
+                                                     end = orfstart + orflen - 1)),
+                                     ebt)
+        genstart <- genend <- integer(length(cbt))
+        genstart[cds_top] <- start(genorf[cds_top])
+        genend[cds_top] <- end(genorf[cds_top])
+        genstart[cds_bot] <- end(genorf[cds_bot])
+        genend[cds_bot] <- start(genorf[cds_bot])
+        orfInfo$orfStartGenomic[rowindex] <- genstart
+        orfInfo$orfEndGenomic[rowindex] <- genend
         # Need to add stopDistanceToLastJunction, PTC
         # need to add orfInfo to switchList
     }
