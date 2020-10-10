@@ -4911,6 +4911,17 @@ importTxDb <- function(
         # Use CDS info to put ORFs in
         cbt <- GenomicFeatures::cdsBy(TxDb, by = "tx")
         ebt <- GenomicFeatures::exonsBy(TxDb, by = "tx")
+        
+        txpt <- transcripts(TxDb)
+        txindex <- match(genePerTxpt$TXNAME, txpt$tx_name)
+        txnums <- as.character(txpt$tx_id[txindex])
+        
+        cbt <- cbt[names(cbt) %in% txnums]
+        orflen <- sum(width(cbt)) - 3 # length of ORF in nt
+        cbt <- cbt[orflen > 0]
+        orflen <- orflen[orflen > 0]
+        ebt <- ebt[names(cbt)]
+        
         orfInfo <- data.frame(isoform_id = genePerTxpt$TXNAME,
                               orfTranscriptStart = NA_integer_,
                               orfTranscriptEnd = NA_integer_,
@@ -4923,9 +4934,9 @@ importTxDb <- function(
                               stopIndex = NA_integer_,
                               PTC = FALSE,
                               stringsAsFactors = FALSE)
-        txpt <- transcripts(TxDb)
-        txindex <- match(genePerTxpt$TXNAME, txpt$tx_name)
-        txnums <- as.character(txpt$tx_id[txindex])
+        
+        orfInfo$orfTranscriptLength[match(names(cbt), txnums)] <- orflen
+        
         for(i in seq_along(genePerTxpt$TXNAME)){
             this_cds <- cbt[[txnums[i]]]
             this_ex <- ebt[[txnums[i]]]
@@ -4958,8 +4969,7 @@ importTxDb <- function(
             
             orfInfo$orfTranscriptStart[i] <-
                 sum(width(leading_exons)) - width(first_cds) + 1
-            orfInfo$orfTranscriptEnd[i] <-
-                orfInfo$orfTranscriptStart[i] + sum(width(this_cds)) - 4 # trim stop codon
+            
              
             if(this_strand == "-"){
                 orfInfo$orfStartGenomic[i] <- end(first_cds)
@@ -4973,8 +4983,8 @@ importTxDb <- function(
                 orfInfo$orfEndExon[i] <- last_cds
             }
         }
-        orfInfo$orfTranscriptLength <-
-            orfInfo$orfTranscriptEnd - orfInfo$orfTranscriptStart + 1
+        orfInfo$orfTranscriptEnd <-
+            orfInfo$orfTranscriptStart + orfInfo$orfTranscriptLength - 1
         # Need to add stopDistanceToLastJunction, PTC
         # need to add orfInfo to switchList
     }
