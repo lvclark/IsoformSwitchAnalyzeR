@@ -4821,6 +4821,10 @@ importTxDb <- function(
     # Extract transcript to gene mapping from TxDb object
     genePerTxpt <- select(TxDb, keys(TxDb, "TXNAME"), columns = "GENEID", keytype = "TXNAME")
     genePerTxpt <- genePerTxpt[!is.na(genePerTxpt$GENEID),]
+    genePerTxpt$TXNAME <- fixNames(genePerTxpt$TXNAME,
+                                   ignoreAfterBar = ignoreAfterBar,
+                                   ignoreAfterSpace = ignoreAfterSpace,
+                                   ignoreAfterPeriod = ignoreAfterPeriod)
 
     ### Make annotation
     myIsoAnot <- data.frame(
@@ -4867,7 +4871,10 @@ importTxDb <- function(
     myExons <- myExons[match(txptPerExon$EXONID, myExons$exon_id)]
     stopifnot(identical(myExons$exon_id, txptPerExon$EXONID))
 
-    myExons$isoform_id <- txptPerExon$TXNAME
+    myExons$isoform_id <- fixNames(txptPerExon$TXNAME,
+                                   ignoreAfterBar = ignoreAfterBar,
+                                   ignoreAfterSpace = ignoreAfterSpace,
+                                   ignoreAfterPeriod = ignoreAfterPeriod)
     myExons$gene_id <- txptPerExon$GENEID
     myExons$exon_id <- NULL
     myExons <- myExons[!is.na(myExons$isoform_id) & !is.na(myExons$gene_id)]
@@ -4913,7 +4920,11 @@ importTxDb <- function(
         ebt <- GenomicFeatures::exonsBy(TxDb, by = "tx")
         
         txpt <- GenomicFeatures::transcripts(TxDb)
-        txindex <- match(genePerTxpt$TXNAME, txpt$tx_name)
+        txindex <- match(genePerTxpt$TXNAME,
+                         fixNames(txpt$tx_name,
+                                  ignoreAfterBar = ignoreAfterBar,
+                                  ignoreAfterSpace = ignoreAfterSpace,
+                                  ignoreAfterPeriod = ignoreAfterPeriod))
         txnums <- as.character(txpt$tx_id[txindex])
         
         cbt <- cbt[names(cbt) %in% txnums]
@@ -5011,11 +5022,27 @@ importTxDb <- function(
         orfInfo$orfEndGenomic[rowindex] <- genend
         
         # Add PTC column to match what readGTF does
-        myIsoAnot$PTC <-
+        localSwitchList$isoformFeatures$PTC <-
             orfInfo$PTC[match(myIsoAnot$isoform_id, orfInfo$isoform_id)]
         
         # add orfInfo to switchList
         localSwitchList$orfAnalysis <- orfInfo
     }
+    
+    # Add sequences to ntSequence slot
+    if(!is.null(isoformNtFasta)){
+        myDNA <- readDNAStringSet(isoformNtFasta)
+        names(myDNA) <- fixNames(names(myDNA),
+                                 ignoreAfterBar = ignoreAfterBar,
+                                 ignoreAfterSpace = ignoreAfterSpace,
+                                 ignoreAfterPeriod = ignoreAfterPeriod)
+        if(!all(genePerTxpt$TXNAME %in% names(myDNA))){
+            stop("Not all transcript IDs from TxDb found in FASTA.")
+        }
+        myDNA <- myDNA[genePerTxpt$TXNAME]
+        localSwitchList$ntSequence <- myDNA
+    }
+    
+    ## need to deal with or delete other parameters
     return(localSwitchList)
 }
