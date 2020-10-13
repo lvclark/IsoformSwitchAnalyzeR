@@ -4829,8 +4829,8 @@ importTxDb <- function(
         condition_1 = "plaseholder1",
         condition_2 = "plaseholder2",
         gene_name = geneid2genename[genePerTxpt$GENEID],
-        gene_biotype = NA, # does this need to be filled in?
-        iso_biotype = NA, # does this need to be filled in?
+        gene_biotype = NA,
+        iso_biotype = NA,
         class_code = '=',
         gene_overall_mean = 0,
         gene_value_1 = 0,
@@ -4897,7 +4897,7 @@ importTxDb <- function(
         )
     
     ### Create switchList
-    localSwichList <- createSwitchAnalyzeRlist(
+    localSwitchList <- createSwitchAnalyzeRlist(
         isoformFeatures = myIsoAnot,
         exons = myExons,
         designMatrix = designMatrix,
@@ -4965,6 +4965,11 @@ importTxDb <- function(
         endexon[cds_top] <- cds_end_exon2[cds_top]
         endexon[cds_bot] <- txpt_end_exon[cds_bot] - cds_end_exon2[cds_bot] + 1L
         
+        # position of last junction
+        lastjunct <- sum(exon_width[exon_ranks < txpt_end_exon]) + 1L
+        # distance from stop to last junction
+        stopdist <- lastjunct - orfstart - orflen + 3L
+        
         # set up output
         orfInfo <- data.frame(isoform_id = genePerTxpt$TXNAME,
                               orfTranscriptStart = NA_integer_,
@@ -4986,14 +4991,16 @@ importTxDb <- function(
         orfInfo$orfStarExon[rowindex] <- startexon
         orfInfo$orfEndExon[rowindex] <- endexon
         orfInfo$stopIndex[rowindex] <- stopindex
+        orfInfo$stopDistanceToLastJunction[rowindex] <- stopdist
 
         orfInfo$orfTranscriptEnd <-
-            orfInfo$orfTranscriptStart + orfInfo$orfTranscriptLength - 1
+            orfInfo$orfTranscriptStart + orfInfo$orfTranscriptLength - 1L
+        orfInfo$PTC <- orfInfo$stopDistanceToLastJunction > PTCDistance
         
         # Genomic coordinates
         genorf <- GenomicFeatures::mapFromTranscripts(GRanges(names(cbt),
                                              IRanges(start = orfstart,
-                                                     end = orfstart + orflen - 1)),
+                                                     end = orfstart + orflen - 1L)),
                                      ebt)
         genstart <- genend <- integer(length(cbt))
         genstart[cds_top] <- start(genorf[cds_top])
@@ -5002,7 +5009,13 @@ importTxDb <- function(
         genend[cds_bot] <- start(genorf[cds_bot])
         orfInfo$orfStartGenomic[rowindex] <- genstart
         orfInfo$orfEndGenomic[rowindex] <- genend
-        # Need to add stopDistanceToLastJunction, PTC
-        # need to add orfInfo to switchList
+        
+        # Add PTC column to match what readGTF does
+        myIsoAnot$PTC <-
+            orfInfo$PTC[match(myIsoAnot$isoform_id, orfInfo$isoform_id)]
+        
+        # add orfInfo to switchList
+        localSwitchList$orfAnalysis <- orfInfo
     }
+    return(localSwitchList)
 }
